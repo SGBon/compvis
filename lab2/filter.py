@@ -43,14 +43,12 @@ def filter(img,task):
     return signal.convolve2d(img,kernel)
 
 def process_img1(imgfile,task):
-    print 'Opening ', imgfile
     img = cv2.imread(imgfile)
 
     img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
     # You should implement your functionality in filter function
     filtered_img = filter(img,task).astype(np.uint8)
-    print img,filtered_img
 
     cv2.imshow('Input image',img)
     cv2.imshow('Filtered image',filtered_img)
@@ -87,9 +85,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='CSCI 4220U Lab 2.')
     parser.add_argument('--use-plotlib', action='store_true', help='If specified uses matplotlib for displaying images.')
     parser.add_argument('imgfile', help='Image file')
+    parser.add_argument('--task',help='task', type=int)
     args = parser.parse_args()
 
-    task = 4
+    task = args.task
 
     if args.use_plotlib:
         process_img2(args.imgfile,task)
