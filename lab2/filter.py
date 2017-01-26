@@ -34,7 +34,10 @@ def filter(img,task):
     elif task == 3:
         kernel = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
     elif task == 4:
-        kernel = np.zeros([5,5])
+        xderiv = np.array([[-1,-2,-1],[0,0,0],[1,2,1]])
+        yderiv = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
+        under = (xderiv * xderiv) + (yderiv*yderiv)
+        kernel = np.sqrt(under)
     elif task == 5:
         kernel = np.array([[0,-1,0],[-1,4,-1],[0,-1,0]])
     return signal.convolve2d(img,kernel)
@@ -86,9 +89,9 @@ if __name__ == '__main__':
     parser.add_argument('imgfile', help='Image file')
     args = parser.parse_args()
 
-    task = 1
+    task = 4
 
     if args.use_plotlib:
         process_img2(args.imgfile,task)
     else:
-        process_img1(args.imgfile,5)
+        process_img1(args.imgfile,task)
