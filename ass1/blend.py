@@ -12,10 +12,14 @@ if __name__ == '__main__':
 
     img1 = cv2.imread(args.imgfile1,0)
     img2 = cv2.imread(args.imgfile2,0)
+
+    if img1.shape != img2.shape:
+        img2 = cv2.resize(img2,(img1.shape[1],img1.shape[0]))
+
     alpha = args.a
     img1 = img1 * alpha
     img2 = img2 * (1-alpha)
     final = img1 + img2
 
-    plt.imshow(final,cmap="gray")
+    plt.imshow(final,cmap='gray')
     plt.show()
