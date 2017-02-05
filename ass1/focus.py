@@ -4,23 +4,24 @@ import matplotlib.pyplot as plt
 import argparse
 from scipy import signal
 
-sobel_y = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
+# laplacian is a high pass filter, so we're using it hear to essentially take everything
+# that isn't in focus out of the image (because low focus == low frequency)
 laplacian = np.array([[0,1,0],[1,-4,1],[0,1,0]])
 
-# determine if an image fragment is in focus
-def focus_fragment(frag):
+# get an "in focus" score from the fragment
+def score_fragment(frag):
     global laplacian
-    fft_frag = np.fft.fft2(frag)
-    fshift = np.fft.fftshift(fft_frag)
-    mgspec = 20*np.log(np.abs(fshift))
     conv = np.abs(signal.convolve2d(frag,laplacian,mode='same'))
     sum = 0
-    avg_coef = conv.shape[0]*conv.shape[1]
+    n = conv.shape[0]*conv.shape[1]
     for i in conv:
         for j in i:
             sum += j
-    print sum/avg_coef
+    avg = sum/n
+    print avg
+    return avg
 
+import time
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='CSCI 4220U Assignment 1 Focus Analysis.')
@@ -31,14 +32,16 @@ if __name__ == '__main__':
 
     w = 15
     dw = w/2
+    threshold = 40
+    elapsed = time.clock()
     for i in range(dw,img.shape[0],w):
         for j in range(dw,img.shape[1],w):
             frag = img[i-dw:i+dw,j-dw:j+dw]
-            focus_fragment(frag)
+            score = score_fragment(frag)
+            # if fragment score is passes some threshold, then add it to in focus
+    elapsed = (time.clock() - elapsed) * 1000
 
-    fft_img = np.fft.fft2(img)
-    fshift = np.fft.fftshift(fft_img)
-    mgspec = 20*np.log(np.abs(fshift))
+    print "Focus analysis took %f milliseconds" % elapsed
 
     conv = np.abs(signal.convolve2d(img,laplacian,mode='same'))
 
