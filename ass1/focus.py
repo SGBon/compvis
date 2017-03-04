@@ -16,13 +16,13 @@ def score_fragment(frag):
         for j in i:
             sum += j
     avg = sum/n
-    print avg
     return avg
 
 import time
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import argparse
+import sys
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='CSCI 4220U Assignment 1 Focus Analysis.')
@@ -35,7 +35,6 @@ if __name__ == '__main__':
     dw = w/2
     threshold = 55
     in_focus = []
-    print img.shape
     elapsed = time.clock()
     for i in range(dw,img.shape[0],w):
         for j in range(dw,img.shape[1],w):
@@ -48,13 +47,9 @@ if __name__ == '__main__':
 
     print "Focus analysis took %f milliseconds" % elapsed
 
-    conv = np.abs(signal.convolve2d(img,laplacian,mode='same'))
-
-    ax = plt.subplot(121)
+    ax = plt.subplot(111)
     plt.imshow(img,cmap = 'gray')
     for i in in_focus:
         rect = patches.Rectangle((i[2],i[0]),i[3] - i[2],i[1]-i[0],linewidth=1,edgecolor='r',facecolor='none')
         ax.add_patch(rect)
-    plt.subplot(122)
-    plt.imshow(conv,cmap='gray')
     plt.show()
