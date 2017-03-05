@@ -1,4 +1,6 @@
 import numpy as np
+from scipy import signal
+from scipy import spatial
 import cv2
 import math
 
@@ -134,20 +136,39 @@ def makeRFSfilters():
 
 def makeSfilters():
     # creates S filter bank
-    print "Implement makeSfilters"
+    NF = 13
+    SUP = 49
+    F = np.zeros((NF,SUP,SUP))
+
+    F[0] = makeSfilter_helper(SUP,2,1)
+    F[1] = makeSfilter_helper(SUP,4,1)
+    F[2] = makeSfilter_helper(SUP,4,2)
+    F[3] = makeSfilter_helper(SUP,6,1)
+    F[4] = makeSfilter_helper(SUP,6,2)
+    F[5] = makeSfilter_helper(SUP,6,3)
+    F[6] = makeSfilter_helper(SUP,8,1)
+    F[7] = makeSfilter_helper(SUP,8,2)
+    F[8] = makeSfilter_helper(SUP,8,3)
+    F[9] = makeSfilter_helper(SUP,10,1)
+    F[10] = makeSfilter_helper(SUP,10,2)
+    F[11] = makeSfilter_helper(SUP,10,3)
+    F[12] = makeSfilter_helper(SUP,10,4)
+    return F
 
 def makeSfilter_helper(sup,sigma,tau):
-    # creates S filters
-    print "Implement Sfilter helper"
+    hsup = (sup-1)/2
+    x,y = np.meshgrid(range(-hsup,hsup+1),range(hsup,-hsup-1,-1))
+    r = (x*x+y*y)**0.5
+    f = np.cos(r*(math.pi*tau/sigma))*np.exp(-(r*r)/(2*sigma*sigma))
+    return normalize(f)
 
-from scipy import signal
-
-# go through every filter in bank, convolve with image, add mean response to vector
+# go through every filter in bank, convolve with image, add responses to vector
 def vectorFromBank(img,bank):
     vec = []
     for f in bank:
         conv = signal.convolve2d(img,f,mode="same")
         vec.append(np.mean(conv))
+        vec.append(np.std(conv))
     return vec
 
 LMF = makeLMfilters()
@@ -162,10 +183,11 @@ def vectorize(image):
     igray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     vec = np.append([],[]) # create empty vector
 
-    vec = np.append(vec,(np.std(ir),np.std(ig),np.std(ib)))
-    vec = np.append(vec,(np.mean(ir),np.mean(ig),np.mean(ib)))
+    #vec = np.append(vec,(np.std(ir),np.std(ig),np.std(ib)))
+    #vec = np.append(vec,(np.mean(ir),np.mean(ig),np.mean(ib)))
     vec = np.append(vec,vectorFromBank(igray,LMF))
     vec = np.append(vec,vectorFromBank(igray,RFSF))
+    vec = np.append(vec,vectorFromBank(igray,SF))
     return vec
 
 
@@ -178,8 +200,18 @@ if __name__ == '__main__':
 
     text1 = cv2.imread(args.text1)
     t1_vec = vectorize(text1)
-    print t1_vec
+    #print t1_vec
 
     text2 = cv2.imread(args.text2)
     t2_vec = vectorize(text2)
-    print t2_vec
+    #print t2_vec
+
+    # calculate some distances
+    euclid = spatial.distance.euclidean(t1_vec,t2_vec)
+    cosine = spatial.distance.cosine(t1_vec,t2_vec)
+    cheb = spatial.distance.chebyshev(t1_vec,t2_vec)
+    braycurt = spatial.distance.braycurtis(t1_vec,t2_vec)
+    canb = spatial.distance.canberra(t1_vec,t2_vec)
+    corr = spatial.distance.correlation(t1_vec,t2_vec)
+
+    print euclid,cosine,cheb,braycurt,canb,corr
