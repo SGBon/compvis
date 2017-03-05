@@ -183,8 +183,8 @@ def vectorize(image):
     igray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     vec = np.append([],[]) # create empty vector
 
-    #vec = np.append(vec,(np.std(ir),np.std(ig),np.std(ib)))
-    #vec = np.append(vec,(np.mean(ir),np.mean(ig),np.mean(ib)))
+    vec = np.append(vec,(np.std(ir),np.std(ig),np.std(ib)))
+    vec = np.append(vec,(np.mean(ir),np.mean(ig),np.mean(ib)))
     vec = np.append(vec,vectorFromBank(igray,LMF))
     vec = np.append(vec,vectorFromBank(igray,RFSF))
     vec = np.append(vec,vectorFromBank(igray,SF))
