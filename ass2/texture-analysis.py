@@ -179,12 +179,16 @@ SF = makeSfilters()
 def vectorize(image):
     global LMF
     global RFSF
+    global SF
     ib,ig,ir = cv2.split(image)
     igray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     vec = np.append([],[]) # create empty vector
 
+    # colour similarities
     vec = np.append(vec,(np.std(ir),np.std(ig),np.std(ib)))
     vec = np.append(vec,(np.mean(ir),np.mean(ig),np.mean(ib)))
+
+    # gaussians, laplacians, sobels, etc
     vec = np.append(vec,vectorFromBank(igray,LMF))
     vec = np.append(vec,vectorFromBank(igray,RFSF))
     vec = np.append(vec,vectorFromBank(igray,SF))
@@ -198,13 +202,12 @@ if __name__ == '__main__':
     parser.add_argument('text2', help='Second texture file')
     args = parser.parse_args()
 
+    # convert textures to vectors
     text1 = cv2.imread(args.text1)
     t1_vec = vectorize(text1)
-    #print t1_vec
 
     text2 = cv2.imread(args.text2)
     t2_vec = vectorize(text2)
-    #print t2_vec
 
     # calculate some distances
     euclid = spatial.distance.euclidean(t1_vec,t2_vec)
@@ -214,4 +217,25 @@ if __name__ == '__main__':
     canb = spatial.distance.canberra(t1_vec,t2_vec)
     corr = spatial.distance.correlation(t1_vec,t2_vec)
 
-    print euclid,cosine,cheb,braycurt,canb,corr
+    # score the distances
+    score = 0
+    if euclid < 90.0:
+        score += 1
+    if cosine < 0.08:
+        score += 1
+    if cheb < 50.0:
+        score += 1
+    if braycurt < 0.17:
+        score += 1
+    if canb < 40:
+        score += 1
+    if corr < 0.10:
+        score += 1
+
+    # decide if the textures are close or not
+    if score > 3:
+        print "True"
+    else:
+        print "False"
+
+    print euclid, cosine, cheb, braycurt, canb,corr
