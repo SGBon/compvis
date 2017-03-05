@@ -102,7 +102,7 @@ def makeLMfilters():
     return F
 
 def makeRFSfilters():
-    # creates LM filter bank
+    # creates RFS filter bank
     SUP = 49
     SCALEX = np.array([1,2,4])
     NORIENT = 6
@@ -132,14 +132,40 @@ def makeRFSfilters():
 
     return F
 
+def makeSfilters():
+    # creates S filter bank
+    print "Implement makeSfilters"
+
+def makeSfilter_helper(sup,sigma,tau):
+    # creates S filters
+    print "Implement Sfilter helper"
+
 from scipy import signal
 
-# go through every filter in bank, convolve with image, add response to vector
+# go through every filter in bank, convolve with image, add mean response to vector
 def vectorFromBank(img,bank):
     vec = []
     for f in bank:
         conv = signal.convolve2d(img,f,mode="same")
         vec.append(np.mean(conv))
+    return vec
+
+LMF = makeLMfilters()
+RFSF = makeRFSfilters()
+SF = makeSfilters()
+
+# vectorizes a texture
+def vectorize(image):
+    global LMF
+    global RFSF
+    ib,ig,ir = cv2.split(image)
+    igray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    vec = np.append([],[]) # create empty vector
+
+    vec = np.append(vec,(np.std(ir),np.std(ig),np.std(ib)))
+    vec = np.append(vec,(np.mean(ir),np.mean(ig),np.mean(ib)))
+    vec = np.append(vec,vectorFromBank(igray,LMF))
+    vec = np.append(vec,vectorFromBank(igray,RFSF))
     return vec
 
 
@@ -151,31 +177,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     text1 = cv2.imread(args.text1)
-    text1b,text1g,text1r = cv2.split(text1)
-    text2 = cv2.imread(args.text2)
-    text2b,text2g,text2r = cv2.split(text2)
-
-    # empty vectors
-    t1_vec = np.append([],[])
-    t2_vec = np.append([],[])
-
-    # get variations of "redness", "blueness", "greeness" in images
-    t1_vec = np.append(t1_vec,(np.std(text1r),np.std(text1g),np.std(text1b)))
-    t2_vec = np.append(t2_vec,(np.std(text2r),np.std(text2g),np.std(text2b)))
-
-    # get means of redness, etc.
-    t1_vec = np.append(t1_vec,(np.mean(text1r),np.mean(text1g),np.mean(text1b)))
-    t2_vec = np.append(t2_vec,(np.mean(text2r),np.mean(text2g),np.mean(text2b)))
-
+    t1_vec = vectorize(text1)
     print t1_vec
+
+    text2 = cv2.imread(args.text2)
+    t2_vec = vectorize(text2)
     print t2_vec
-
-    text1gray = cv2.cvtColor(text1,cv2.COLOR_BGR2GRAY)
-    text2gray = cv2.cvtColor(text2,cv2.COLOR_BGR2GRAY)
-
-    LMF = makeLMfilters()
-    RFSF = makeRFSfilters()
-    print " ----------------- LMF ----------------"
-    print vectorFromBank(text1gray,LMF)
-    print "------------------ RFSF --------------------"
-    print vectorFromBank(text1gray,RFSF)
