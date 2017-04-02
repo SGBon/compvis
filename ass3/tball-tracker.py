@@ -1,5 +1,6 @@
 from collections import deque
 import numpy as np
+from scipy import spatial
 import cv2
 
 import argparse
@@ -10,7 +11,7 @@ if __name__ == '__main__':
     parser.add_argument('--video',type=str, help='video file')
     args = parser.parse_args()
 
-    positions = deque()
+    positions = []
 
     if args.video == None:
         feed = cv2.VideoCapture(0)
@@ -36,6 +37,8 @@ if __name__ == '__main__':
         center = None
 
         if len(cnts) > 0:
+            i = 0
+            centers = []
             for c in cnts:
                 ((x,y),radius) = cv2.minEnclosingCircle(c)
                 # only use large radius objects
@@ -46,7 +49,14 @@ if __name__ == '__main__':
                     # draw contours
                     cv2.circle(frame,(int(x),int(y)),int(radius),(0,255,255),2)
                     cv2.circle(frame,center,5,(0,0,255),-1)
-                    positions.appendleft(center)
+                    centers.append(center)
+                    i += 1
+            if len(positions) == 0:
+                positions = centers[:]
+            kdtree = spatial.cKDTree(positions)
+            _,indices = kdtree.query(centers)
+            for i in indices:
+                cv2.putText(frame,str(i),positions[i],cv2.FONT_HERSHEY_PLAIN,2,(255,0,0))
 
 
         cv2.imshow("frame",frame)
