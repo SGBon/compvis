@@ -8,23 +8,29 @@ import argparse
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='CSCI 4220U Assignment 3 Tennis Ball Tracking')
-    parser.add_argument('--video',type=str, help='video file')
+    parser.add_argument('--rpi',type=bool,help="rpiflag")
     args = parser.parse_args()
 
     positions = []
 
-    if args.video == None:
-        feed = cv2.VideoCapture(0)
+    if args.rpi:
+        from picamera.array import PiRGBArray
+        from picamera import PiCamera
+        camera = PiCamera()
+        feed = PiRGBArray(camera)
     else:
-        feed  = cv2.VideoCapture(args.video)
+        feed = cv2.VideoCapture(0)
 
     green_lower = np.array([29,50,43],dtype=np.uint8)
     green_upper = np.array([75,255,255],dtype=np.uint8)
     while True:
-        ret, frame = feed.read()
+        if args.rpi:
+            camera.capture(feed,format="bgr")
+            frame = rawCapture.array
+        else:
+            ret, frame = feed.read()
 
-        if args.video != None and not ret:
-            break
+
 
         blurred = cv2.GaussianBlur(frame,(11,11),0)
         hsv = cv2.cvtColor(blurred,cv2.COLOR_BGR2HSV)
@@ -51,12 +57,15 @@ if __name__ == '__main__':
                     cv2.circle(frame,center,5,(0,0,255),-1)
                     centers.append(center)
                     i += 1
-            if len(positions) == 0:
-                positions = centers[:]
-            kdtree = spatial.cKDTree(positions)
-            _,indices = kdtree.query(centers)
-            for i in indices:
-                cv2.putText(frame,str(i),positions[i],cv2.FONT_HERSHEY_PLAIN,2,(255,0,0))
+            # check nearest neighbours
+            if len(centers) > 0:
+                if len(positions) == 0:
+                    positions = centers[:]
+                kdtree = spatial.cKDTree(centers)
+                _,indices = kdtree.query(positions)
+                for i in indices:
+                    cv2.putText(frame,str(i),centers[i],cv2.FONT_HERSHEY_PLAIN,2,(255,0,0))
+                positions = centers[:] # update the previous positions
 
 
         cv2.imshow("frame",frame)
